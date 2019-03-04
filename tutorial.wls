@@ -17,16 +17,19 @@ wealth of data ourselves and start to become data explorers.
 The NEXRAD information is streamed and stored in the Amazon cloud and is open to the public 
 courtesy of NOAA's National Weather Service and the US government. *)
 
+(* import an example dataset *)
 datasets = 
-  Import["/Users/fabian/OneDrive/cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", "NetCDF"];
+  Import["./cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", "NetCDF"];
 
 ds = Dataset[
   AssociationThread[datasets, 
-   Import["/Users/fabian/OneDrive/cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", {"Datasets", 
+   Import["./cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", {"Datasets", 
      datasets}]]]
-     
+
+(* plot a map of where the radar station location *)
 GeoPosition[{ds["latitude"], ds["longitude"], ds["altitude"]}] // GeoGraphics
 
+(* define a couple of tables to translate measurement table indices to end of rays, ray number, range helper tables etc. *)
 rayEndRange = 
   Normal[ds[
      "ray_start_range"]] + (Normal[ds["ray_n_gates"]] - 1) Normal[
@@ -41,6 +44,7 @@ rangeAll =
     Normal[ds["ray_gate_spacing"]]}];
 rangeAllFlat = Flatten[rangeAll];
 
+(* calculate geolocations of points belonging to a ray *)
 eastProj = 
   Normal[ ds["azimuth", Sin[# Degree] &]] Normal[ 
     ds["elevation", Cos[# Degree] &]];
@@ -52,15 +56,18 @@ NexradPos[r_, e_, n_, u_] :=
  GeoPosition[
   GeoPositionENU[r {e, n, u}, 
    GeoPosition[{ds["latitude"], ds["longitude"], ds["altitude"]}]]]
-   
+
+(* take the first ray in the dataset as an example and plot its points on a map *)
 rayExample = 
  NexradPos[#, eastProj[[1]], northProj[[1]], upProj[[1]]] & /@ 
   rangeAll[[1, ;;]]
   
 GeoListPlot[rayExample]
 
+(* have look at the histogram of all reflectivities in the scanned volume *)
 Histogram[ds["REF"], PlotRange -> All]
 
+(* select only the top reflectivity voxels and plot a histogram of their geographic distribution *)
 refSelected = Position[Normal[ds["REF"]], _?(# > -10 &)] // Flatten;
 
 posREFHigh = 
