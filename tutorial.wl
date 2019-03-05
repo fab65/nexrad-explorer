@@ -17,13 +17,16 @@ wealth of data ourselves and start to become data explorers.
 The NEXRAD information is streamed and stored in the Amazon cloud and is open to the public 
 courtesy of NOAA's National Weather Service and the US government. *)
 
+(* set your input/output path *)
+iodir = "/path/to/your/directory/"
+
 (* import an example dataset *)
 datasets = 
-  Import["./cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", "NetCDF"];
+  Import[iodir <> "cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", "NetCDF"];
 
 ds = Dataset[
   AssociationThread[datasets, 
-   Import["./cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", {"Datasets", 
+   Import[iodir <> "/cfrad.20190101_001553.696_to_20190101_002119.084_KCXX_Surveillance_SUR.nc", {"Datasets", 
      datasets}]]]
 
 (* plot a map of where the radar station location *)
@@ -75,4 +78,6 @@ posREFHigh =
     northProj[[ rayNumber[[#]] ]], upProj[[rayNumber[[#]] ]]] & /@ 
   refSelected[[ ;; ]]
   
-GeoHistogram[posREFHigh]
+refHiMap = GeoHistogram[posREFHigh]
+Export[iodir <> "HiReflectivityMap.png", refHiMap, "PNG"]
+Print["Done"]
